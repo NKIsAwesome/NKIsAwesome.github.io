@@ -1,0 +1,156 @@
+
+<html>
+
+<head>
+    <style>
+        p {
+
+            color: white;
+            text-shadow:
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000;
+            background: #4A75B2;
+            border-radius: 7px;
+            border: 2px solid #5A8FD5;
+        }
+
+        input {
+            /*text-align-last: center;*/
+            background-color: #436FA8;
+
+            color: white;
+            text-shadow:
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        body {
+            margin: 0 auto;
+            background-color: #5A8FD5;
+            color: white;
+            font-family: sans-serif;
+            text-align: center;
+        }
+        a{
+            text-decoration: none;
+            color: white;
+        }
+
+        textarea {
+            color: white;
+            text-shadow:
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000;
+            background: #4A75B2;
+            border-radius: 7px;
+            border: 2px solid #5A8FD5;
+            width: 60%;
+            height: 60%;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <h1>NKIA's SAS4 String Editor</h1>
+        <input type="file" id="file">
+        <br>
+        <br>
+	<!-- <textarea id="strings"></textarea>-->
+	<div id="output">
+	</div>
+        <br>
+        <br>
+        <input type="button" value="Download" onclick="download()">
+        <br>
+        <br>
+        <a href = "https://www.youtube.com/channel/UCPkouG116lenuZl3G1oYYrQ">Check out my channel</a>
+    </div>
+
+    <script>
+        document.getElementById('file').addEventListener('change', function () {
+            var reader = new FileReader();
+            reader.onload = function () {
+
+                var arrayBuffer = this.result,
+                    array = new Uint8Array(arrayBuffer);
+                render(decode(array));
+                //temp = (encode(decode(array)));
+                //console.log([...array]);
+
+            }
+            reader.readAsArrayBuffer(this.files[0]);
+        });
+	const render = strings=>{
+		const output = document.getElementById('output');
+		strings.forEach((line,i)=>{
+			const numElement = document.createElement('span');
+			numElement.innerText = i + ': ';
+			const lineElement = document.createElement('span');
+			lineElement.innerText = line;
+			lineElement.className = 'line';
+			lineElement.contentEditable = true;
+			const br = document.createElement('br');
+			output.appendChild(numElement);
+			output.appendChild(lineElement);
+			output.appendChild(br);
+		});
+	}
+	const derender = ()=>{
+		return [...document.querySelectorAll('.line')].map(element=>element.innerText);
+	}
+	const decode = buf =>{
+		let result = '';
+		buf.forEach((byte,i)=>{
+			result += String.fromCharCode((byte + i) % 256);
+		});
+		let delimiter = '';
+		[35,95,83,84,82,95,35].forEach(num=>{
+			delimiter += String.fromCharCode(num);
+		});
+		return result.split(delimiter);
+	}
+        const encode = strings => {
+		let delimiter = '';
+		[35,95,83,84,82,95,35].forEach(num=>{
+			delimiter += String.fromCharCode(num);
+		});
+		const bytes = [...strings.join(delimiter)].map(char=>char.charCodeAt(0));
+		const byteArray = new Uint8Array(bytes);
+		return byteArray.map((byte,i)=>byte-i);
+        }
+        let download = () => {
+            //let input = document.getElementById('strings').value;
+            let data = encode(derender());
+            console.log(data);
+            let fileName = document.getElementById('file').files[0].name;
+            let type = "application/data";
+            let a = document.createElement("a"),
+                file = new Blob([data], { type: type });
+            if (window.navigator.msSaveOrOpenBlob) // IE10+
+                window.navigator.msSaveOrOpenBlob(file, fileName);
+            else { // Others
+                var url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function () {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            }
+        }
+    </script>
+</body>
+
+</html>
+
