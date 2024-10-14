@@ -1,0 +1,71 @@
+<html>
+<head>
+<style>
+	body{
+		background-color:#222222;
+		color:white;
+		font-family:Arial;
+	}
+	div{
+		padding:30px;
+	}
+	h1{
+		padding-left:30px;
+		padding-top:30px;
+	}
+</style>
+<script>
+
+const dec = (str,key)=>str.match(/.{1,2}/g).map(a=>String.fromCharCode(parseInt(a, 16) ^ key)).join('');
+
+
+const checkProbScore = str=>{
+
+    const filteredStr = [...str.toUpperCase()].join('');
+    const strProbs = (new Array(256)).fill().map((a,i)=>{
+       return ([...filteredStr].filter(c=>c.charCodeAt(0) === i).length) /filteredStr.length;
+    });
+    return strProbs.reduce((acc,curr,i)=>acc + (curr * probs[i]),0)
+}
+
+const doBruteForce = cipherText=>{
+    const computed = (new Array(256)).fill().map((a,i)=>dec(cipherText,i)).map((s,i)=>({score:checkProbScore(s),key:i}))
+    return dec(cipherText,computed.sort((a,b)=>(Math.abs(desired-a.score))-Math.abs(desired-b.score))[0].key)
+}
+
+
+const letterProbs = [8.2, 1.5, 2.8, 4.3, 12.7, 2.2, 2.0, 6.1, 7.0, 0.2, 0.8, 4.0, 2.4, 6.7, 1.5, 1.9, 0.1, 6.0, 6.3, 9.1, 2.8, 1.0, 2.4, 0.2, 2.0, 0.1].map(a=>a/100)
+const probs = (new Array(256)).fill(0);
+letterProbs.forEach((l,i)=>probs[i+65]=l);
+const desired = 0.06;
+
+const doCrack = ()=>{
+	const cipherText = document.getElementById('cipherText').value;
+	const plainText = doBruteForce(cipherText);
+	document.getElementById('cipherText').value = plainText;
+}
+
+const getData = async ()=>{
+	const data = await (await fetch('https://api.ninjakiwi.com/sas4/globalkills')).json()
+	return data.config.milestones.map(a=>a.corruptedData).filter(a=>a!=='-corrupt blank data-' && !!a);
+}
+
+window.addEventListener('load',async ()=>{
+	const data = await getData();
+	const output = document.getElementById('logs');
+	data.map((a,i)=>{
+		const plainText = doBruteForce(a);
+		const element = document.createElement('div');
+		element.innerText = `Encrypted Message ${i}: ${plainText}`
+		output.appendChild(element);
+	});
+
+});
+
+</script>
+</head>
+<body>
+	<h1>Project Icarus Autodecrypter</h1>
+	<div id="logs"></div>
+</body>
+</html>
